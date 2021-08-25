@@ -1,7 +1,7 @@
 # fcpsDash
 1) Clone the repository
 2) From the repo directory, run "docker build -t fcps .\"
-3) After the fcps image builds, rune "docker run -ti --rm -p 8080:8080 fcps Rscript FCPS_Dash.R"
+3) After the fcps image builds, run "docker run -ti --rm -p 8080:8080 fcps Rscript FCPS_Dash.R"
 
 The dashboard will now be available in your browser at http://127.0.0.1:8080
 
