@@ -58,7 +58,7 @@ app$layout(htmlDiv(list(
     dccGraph(id = 'Boxplot-LastNDay-Avg'),
     dccInterval(
       id = 'interval-component',
-      interval = 120 * 1000,
+      interval = 3600 * 1000,
       # in milliseconds
       n_intervals = 0
     )
@@ -79,7 +79,7 @@ app$callback(
 
   update_graph <- function(n_intervals,LastNDay,radioCaseQuar) {
     
-    if(n_intervals==0 || (n_intervals*120)%%120==0){
+    if(n_intervals==0 || (n_intervals*3600)%%3600==0){
       THEDASH <- getURL(DASHURL,.opts = list(ssl.verifypeer = FALSE))
       TABLES <- readHTMLTable(THEDASH)
       TABLES <- list.clean(TABLES,fun=is.null,recursive=FALSE)
