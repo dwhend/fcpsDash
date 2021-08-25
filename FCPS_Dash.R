@@ -14,28 +14,51 @@ DASHURL <- "https://apps3.fcps.net/covid-dash/dash-2.asp"
 
 app <- Dash$new()
 
-app$layout(htmlDiv(list(
-  htmlDiv(
-    list(htmlDiv(
-      list(
-        htmlLabel('Measure Type'),
-        dccRadioItems(
-          id = "Radio-Case-Quar",
-          options = list(
-            list(label = 'Cases', value = 'cases'),
-            list(label = 'Quarantining', value = 'quarantining')
-          ),
-          value = 'cases',
-          labelStyle = list('display' = 'block')
+app$layout(
+htmlDiv(list(
+  htmlH2('FCPS Covid-19 Dash'),
+  htmlDiv(list(
+      #radio
+      htmlDiv(list(
+      htmlLabel('Measure Type'),
+      dccRadioItems(
+        id = "Radio-Case-Quar",
+        options = list(
+          list(label = 'Cases', value = 'cases'),
+          list(label = 'Quarantining', value = 'quarantining')
         ),
-        dccInput(id='Text-Search',value='',type='text',placeholder='Search Schools',debounce=TRUE)
+        value = 'cases',
+        labelStyle = list('display' = 'block')
+      ))
+      , style=list('height'='150px','width'='150px','display'='inline-block','verticalAlign'='top')
+      ),
+      #radio-end
+      #search
+      htmlDiv(list(
+        htmlLabel('Filter by School: '),
+        dccInput(
+          id = 'Text-Search',
+          value = '',
+          type = 'text',
+          placeholder = 'Search Schools',
+          debounce = TRUE
+        )
       )
-      ,
-      style = list('width' = '20%', 'display' = 'inline-block')
-    ),
-    htmlDiv(
-      list(
-        htmlLabel('Select measure period'),
+      ,style=list('height'='150px','width'='200px','display'='inline-block','verticalAlign'='top')
+      ),
+      #search-end
+      #disclaimer
+      htmlDiv(list(
+        htmlP('This dashboard was created by a parent of a FCPS student, and is not directly affiliated with FCPS in anyway.'),
+        htmlP('All data herein is publicly available at http://fcps.net/covid19 and is scraped at page load.'),
+        htmlP('The data presented in these visualizations should not be used to inform any health decisions for you or your family without consulting with a Publich Health official.')
+      )
+      ,style=list('display'='inline-block','verticalAlign'='top')
+      ),
+      #disclaimer-end
+      #measureprd
+      htmlDiv(list(
+        htmlLabel('Measure Period: '),
         dccDropdown(
           id = 'Dropdown-LastNDay',
           options = list(
@@ -48,13 +71,17 @@ app$layout(htmlDiv(list(
           value = 7
         )
       ),
-      style = list('width' = '60%', 'display' = 'inline-block')
-    ))
-    ,
-    style = list('width' = '100%', 'display' = 'inline-block')
+      style = list('height'='200px', 'width' = '300px')
+      )
+      #measureprd-end
+
+  )
+  , style=list('height'='10%','width'='100%','display'='inline-block')
   ),
+  #charts
   htmlDiv(list(
-    htmlDiv(dccGraph(id = 'Table-GrandTotal'), style = list('height' = 100)),
+    dccGraph(id = 'Barchart-Timeseries'),
+    htmlDiv(dccGraph(id = 'Table-GrandTotal'), style = list('height' = 200)),
     dccGraph(id = 'Boxplot-LastNDay-Total'),
     dccGraph(id = 'Boxplot-LastNDay-Avg'),
     dccInterval(
@@ -63,14 +90,18 @@ app$layout(htmlDiv(list(
       # in milliseconds
       n_intervals = 0
     )
-  ))
-)))
+  )
+  )
+  #charts-end
+)
+))
 
 app$callback(
   output = list(
       output('Table-GrandTotal','figure'),
       output('Boxplot-LastNDay-Total','figure'),
-      output('Boxplot-LastNDay-Avg','figure')
+      output('Boxplot-LastNDay-Avg','figure'),
+      output('Barchart-Timeseries','figure')
   ),
   params = list(
     input('interval-component','n_intervals'),
@@ -117,6 +148,11 @@ app$callback(
         summarise(TotalStudentCases=sum(StudentCaseNum),TotalStaffCases=sum(StaffCaseNum),AvgStudentCases=ave(StudentCaseNum),AvgStaffCases=ave(StaffCaseNum)) %>%
         distinct()
       
+      DASHC_LAST_N_Timeseries <- DASHC_LAST_N_DAY %>%
+        group_by(DateReported) %>%
+        summarise(DailyStudent=sum(StudentCaseNum),DailyStaff=sum(StaffCaseNum)) %>%
+        distinct()
+      
       DASHC_LAST_N_DAY_Agg_GrandTotal <- DASHC_LAST_N_DAY_Agg %>%
         group_by() %>%
         summarise(TotalStudentCases=sum(TotalStudentCases),TotalStaffCases=sum(TotalStaffCases)) %>%
@@ -149,6 +185,11 @@ app$callback(
       DASHC_LAST_N_DAY_Agg <- DASHC_LAST_N_DAY %>% 
         group_by(School,SchoolType) %>% 
         summarise(TotalStudentQuar=sum(StudentQuarantineNum),TotalStaffQuar=sum(StaffQuarantineNum),AvgStudentQuar=ave(StudentQuarantineNum),AvgStaffQuar=ave(StaffQuarantineNum)) %>%
+        distinct()
+      
+      DASHC_LAST_N_Timeseries <- DASHC_LAST_N_DAY %>%
+        group_by(DateReported) %>%
+        summarise(DailyStudent=sum(StudentQuarantineNum),DailyStaff=sum(StaffQuarantineNum)) %>%
         distinct()
       
       DASHC_LAST_N_DAY_Agg_GrandTotal <- DASHC_LAST_N_DAY_Agg %>%
@@ -187,7 +228,11 @@ app$callback(
              ,boxmode="group"
              ,xaxis = list(title="",categoryorder="array",categoryarray=c("Elementary","Middle","High School","Other")))
     
-    return(list(figGrandTotal,figTotal,figAvg))
+    figStackedBar <- plot_ly(data=DASHC_LAST_N_Timeseries,x=~DateReported,y=~DailyStudent,type='bar',name='Students') %>%
+                     add_trace(y=~DailyStaff,name='Staff') %>%
+                     layout(title=paste("Number of new ",radioCaseQuar," by day",sep=""), xaxis=list(title="Date Reported"),yaxis=list(title='Count of Student/Staff'), barmode='stack')
+    
+    return(list(figGrandTotal,figTotal,figAvg,figStackedBar))
   }
 )
 
