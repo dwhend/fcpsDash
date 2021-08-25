@@ -3,6 +3,7 @@ library(RCurl)
 library(rlist)
 library(dplyr)
 library(tidyr)
+library(stringr)
 library(plotly)
 library(dash)
 library(dashCoreComponents)
@@ -22,12 +23,12 @@ app$layout(htmlDiv(list(
           id = "Radio-Case-Quar",
           options = list(
             list(label = 'Cases', value = 'cases'),
-            list(label = 'Quarantining', value =
-                   'quarantining')
+            list(label = 'Quarantining', value = 'quarantining')
           ),
           value = 'cases',
           labelStyle = list('display' = 'block')
-        )
+        ),
+        dccInput(id='Text-Search',value='',type='text',placeholder='Search Schools',debounce=TRUE)
       )
       ,
       style = list('width' = '20%', 'display' = 'inline-block')
@@ -70,21 +71,22 @@ app$callback(
       output('Table-GrandTotal','figure'),
       output('Boxplot-LastNDay-Total','figure'),
       output('Boxplot-LastNDay-Avg','figure')
-    ),
+  ),
   params = list(
     input('interval-component','n_intervals'),
     input('Dropdown-LastNDay',property='value'),
-    input('Radio-Case-Quar',property='value')
+    input('Radio-Case-Quar',property='value'),
+    input('Text-Search',property='value')
     ),
 
-  update_graph <- function(n_intervals,LastNDay,radioCaseQuar) {
+  update_graph <- function(n_intervals,LastNDay,radioCaseQuar,textSearch) {
     
     if(n_intervals==0 || (n_intervals*3600)%%3600==0){
       THEDASH <- getURL(DASHURL,.opts = list(ssl.verifypeer = FALSE))
       TABLES <- readHTMLTable(THEDASH)
       TABLES <- list.clean(TABLES,fun=is.null,recursive=FALSE)
       ROWS <- unlist(lapply(TABLES,function(t) dim(t)[1]))
-      DASHDF <- merge(TABLES[["NULL"]],SCHOOLS,by="School")
+      DASHDF <- merge(x=TABLES[["NULL"]],y=SCHOOLS,by="School",all.x=TRUE)
       rm(TABLES)
       
       mostRecentDt <- max(as.Date(DASHDF$"Date Reported","%m/%d/%Y"), na.rm=TRUE) %>% as.Date()
@@ -103,7 +105,12 @@ app$callback(
     }
     
     if(radioCaseQuar=="cases"){
-      DASHC_LAST_N_DAY <- DASHC %>% filter(Ndays <= LastNDay)
+      
+      textSearch <- str_to_lower(str_trim(textSearch))
+      
+      ifelse(str_trim(textSearch)==''
+             ,DASHC_LAST_N_DAY <- DASHC %>% filter(Ndays <= LastNDay)
+             ,DASHC_LAST_N_DAY <- DASHC %>% filter((Ndays <= LastNDay) & (str_detect(str_to_lower(str_trim(School)),textSearch))))
       
       DASHC_LAST_N_DAY_Agg <- DASHC_LAST_N_DAY %>% 
         group_by(School,SchoolType) %>% 
@@ -132,7 +139,12 @@ app$callback(
     }
     
     if(radioCaseQuar=="quarantining"){
-      DASHC_LAST_N_DAY <- DASHC %>% filter(Ndays <= LastNDay)
+      
+      textSearch <- str_to_lower(str_trim(textSearch))
+      
+      ifelse(str_trim(textSearch)==''
+             ,DASHC_LAST_N_DAY <- DASHC %>% filter(Ndays <= LastNDay)
+             ,DASHC_LAST_N_DAY <- DASHC %>% filter((Ndays <= LastNDay) & (str_detect(str_to_lower(str_trim(School)),textSearch))))
       
       DASHC_LAST_N_DAY_Agg <- DASHC_LAST_N_DAY %>% 
         group_by(School,SchoolType) %>% 
@@ -174,7 +186,6 @@ app$callback(
       layout(title = paste("FCPS Average new ",radioCaseQuar," per day for the last ",LastNDay," days as of:",mostRecentDt,sep="")
              ,boxmode="group"
              ,xaxis = list(title="",categoryorder="array",categoryarray=c("Elementary","Middle","High School","Other")))
-    
     
     return(list(figGrandTotal,figTotal,figAvg))
   }
