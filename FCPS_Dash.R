@@ -51,7 +51,8 @@ htmlDiv(list(
       htmlDiv(list(
         htmlP('This dashboard was created by a parent of a FCPS student, and is not directly affiliated with FCPS in anyway.'),
         htmlP('All data herein is publicly available at http://fcps.net/covid19 and is scraped at page load.'),
-        htmlP('The data presented in these visualizations should not be used to inform any health decisions for you or your family without consulting with a Publich Health official.')
+        htmlP('The data presented in these visualizations should not be used to inform any health decisions for you or your family without consulting with a Publich Health official.'),
+        htmlP('Built using Dashr for R -- Source code available at: https://github.com/dwhend/fcpsDash')
       )
       ,style=list('display'='inline-block','verticalAlign'='top')
       ),
