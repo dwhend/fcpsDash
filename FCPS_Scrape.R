@@ -14,5 +14,5 @@ mostRecentDt <- max(as.Date(DASHDF$"Date Reported","%m/%d/%Y"), na.rm=TRUE) %>% 
 
 DASHDF %>% 
   filter(mostRecentDt-as.Date(DASHDF$`Date Reported`,"%m/%d/%Y") <= 28) %>%
-  write.csv(file="FCPS_scrape.csv")
+  write.csv(file="FCPS_scrape.csv",row.names=FALSE)
 

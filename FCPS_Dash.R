@@ -48,7 +48,7 @@ htmlDiv(list(
       htmlDiv(list(
         htmlP('This dashboard was created by a parent of a FCPS student, and is not directly affiliated with FCPS in anyway.'),
         htmlP('All data herein is publicly available at http://fcps.net/covid19'),
-        htmlP('The data presented in these visualizations should not be used to inform any health decisions for you or your family without consulting with a Publich Health official.'),
+        htmlP('The data presented in these visualizations should not be used to inform any health decisions for you or your family without consulting with a publich health official.'),
         htmlP('Built using Dashr for R -- Source code available at: https://github.com/dwhend/fcpsDash'),
         htmlP(paste("Data last updated ",lastUpdateDt,sep=""))
       )
@@ -112,21 +112,19 @@ app$callback(
   update_graph <- function(n_intervals,LastNDay,radioCaseQuar,textSearch) {
     
     if(n_intervals==0 || (n_intervals*3600)%%3600==0){
-      DASHF <- read.csv(file='FCPS_scrape.csv')
+      DASHDF <- read.csv(file='FCPS_scrape.csv')
       lastUpdateDt <- file.info('FCPS_scrape.csv')$mtime
-     
-      mostRecentDt <- max(as.Date(DASHDF$"Date Reported","%m/%d/%Y"), na.rm=TRUE) %>% as.Date()
       
-      DASHC <- data.frame(DateReported=as.Date(DASHDF$`Date Reported`,"%m/%d/%Y")
+      mostRecentDt <- max(as.Date(DASHDF$Date.Reported,"%m/%d/%Y"), na.rm=TRUE)
+      
+      DASHC <- data.frame(DateReported=as.Date(DASHDF$Date.Reported,"%m/%d/%Y")
                           ,School=DASHDF$School
-                          ,StudentCaseNum=as.numeric(DASHDF$`Student Cases`)
-                          ,StaffCaseNum=as.numeric(DASHDF$`Staff Cases`)
-                          ,StudentQuarantineNum=as.numeric(DASHDF$`Student Quarantines`)
-                          ,StaffQuarantineNum=as.numeric(DASHDF$`Staff Quarantines`)
-                          ,Ndays=(mostRecentDt-as.Date(DASHDF$`Date Reported`,"%m/%d/%Y"))
-                          ,SchoolType=DASHDF$`SchoolType`
-                          ,lastUpdateDt=lastUpdateDt
-      )
+                          ,StudentCaseNum=as.numeric(DASHDF$Student.Cases)
+                          ,StaffCaseNum=as.numeric(DASHDF$Staff.Cases)
+                          ,StudentQuarantineNum=as.numeric(DASHDF$Student.Quarantines)
+                          ,StaffQuarantineNum=as.numeric(DASHDF$Staff.Quarantines)
+                          ,Ndays=(mostRecentDt-as.Date(DASHDF$Date.Reported,"%m/%d/%Y"))
+                          ,SchoolType=DASHDF$SchoolType)
       
       rm(DASHDF)
     }
