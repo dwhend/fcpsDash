@@ -51,7 +51,7 @@ htmlDiv(list(
         htmlP('All data herein is publicly available at http://fcps.net/covid19'),
         htmlP('The data presented in these visualizations should not be used to inform any health decisions for you or your family without consulting with your Doctor, or a public health official.'),
         htmlP('Built using Dash for R. Source code available at: https://github.com/dwhend/fcpsDash'),
-        htmlP(paste("Data last updated ",lastUpdateDt," UTC (",format(with_tz(lastUpdateDt, tz = "America/New_York"),'%Y-%m-%d %I:%M %p')," ET)",sep=""))
+        htmlP(id='htmlp-lastupdatedt',children="Data last updated ")
       )
       ,style=list('display'='inline-block','verticalAlign'='top')
       ),
@@ -101,7 +101,8 @@ app$callback(
       output('Table-GrandTotal','figure'),
       output('Boxplot-LastNDay-Total','figure'),
       output('Boxplot-LastNDay-Avg','figure'),
-      output('Barchart-Timeseries','figure')
+      output('Barchart-Timeseries','figure'),
+      output('htmlp-lastupdatedt','children')
   ),
   params = list(
     input('interval-component','n_intervals'),
@@ -115,6 +116,7 @@ app$callback(
     if(n_intervals==0 || (n_intervals*3600)%%3600==0){
       DASHDF <- read.csv(file='FCPS_scrape.csv')
       lastUpdateDt <- file.info('FCPS_scrape.csv')$mtime
+      lastUpdateStr <- paste("Data last updated ",lastUpdateDt," UTC (",format(with_tz(lastUpdateDt, tz = "America/New_York"),'%Y-%m-%d %I:%M %p')," ET)",sep="")
       
       mostRecentDt <- max(as.Date(DASHDF$Date.Reported,"%m/%d/%Y"), na.rm=TRUE)
       
@@ -227,7 +229,7 @@ app$callback(
                      add_trace(y=~DailyStaff,name='Staff') %>%
                      layout(title=paste("Number of new ",radioCaseQuar," by day",sep=""), xaxis=list(title="Date Reported"),yaxis=list(title='Count of Student/Staff'), barmode='stack')
     
-    return(list(figGrandTotal,figTotal,figAvg,figStackedBar))
+    return(list(figGrandTotal,figTotal,figAvg,figStackedBar,lastUpdateStr))
   }
 )
 
