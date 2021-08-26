@@ -1,6 +1,3 @@
-library(XML)
-library(RCurl)
-library(rlist)
 library(dplyr)
 library(tidyr)
 library(stringr)
@@ -10,7 +7,7 @@ library(dashCoreComponents)
 library(dashHtmlComponents)
 
 SCHOOLS<-read.csv("SchoolType.csv")
-DASHURL <- "https://apps3.fcps.net/covid-dash/dash-2.asp"
+lastUpdateDt <- Sys.time()
 
 app <- Dash$new()
 
@@ -50,9 +47,10 @@ htmlDiv(list(
       #disclaimer
       htmlDiv(list(
         htmlP('This dashboard was created by a parent of a FCPS student, and is not directly affiliated with FCPS in anyway.'),
-        htmlP('All data herein is publicly available at http://fcps.net/covid19 and is scraped at page load.'),
+        htmlP('All data herein is publicly available at http://fcps.net/covid19'),
         htmlP('The data presented in these visualizations should not be used to inform any health decisions for you or your family without consulting with a Publich Health official.'),
-        htmlP('Built using Dashr for R -- Source code available at: https://github.com/dwhend/fcpsDash')
+        htmlP('Built using Dashr for R -- Source code available at: https://github.com/dwhend/fcpsDash'),
+        htmlP(paste("Data last updated ",lastUpdateDt,sep=""))
       )
       ,style=list('display'='inline-block','verticalAlign'='top')
       ),
@@ -114,13 +112,9 @@ app$callback(
   update_graph <- function(n_intervals,LastNDay,radioCaseQuar,textSearch) {
     
     if(n_intervals==0 || (n_intervals*3600)%%3600==0){
-      THEDASH <- getURL(DASHURL,.opts = list(ssl.verifypeer = FALSE))
-      TABLES <- readHTMLTable(THEDASH)
-      TABLES <- list.clean(TABLES,fun=is.null,recursive=FALSE)
-      ROWS <- unlist(lapply(TABLES,function(t) dim(t)[1]))
-      DASHDF <- merge(x=TABLES[["NULL"]],y=SCHOOLS,by="School",all.x=TRUE)
-      rm(TABLES)
-      
+      DASHF <- read.csv(file='FCPS_scrape.csv')
+      lastUpdateDt <- file.info('FCPS_scrape.csv')$mtime
+     
       mostRecentDt <- max(as.Date(DASHDF$"Date Reported","%m/%d/%Y"), na.rm=TRUE) %>% as.Date()
       
       DASHC <- data.frame(DateReported=as.Date(DASHDF$`Date Reported`,"%m/%d/%Y")
@@ -131,6 +125,7 @@ app$callback(
                           ,StaffQuarantineNum=as.numeric(DASHDF$`Staff Quarantines`)
                           ,Ndays=(mostRecentDt-as.Date(DASHDF$`Date Reported`,"%m/%d/%Y"))
                           ,SchoolType=DASHDF$`SchoolType`
+                          ,lastUpdateDt=lastUpdateDt
       )
       
       rm(DASHDF)
