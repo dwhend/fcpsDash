@@ -2,6 +2,7 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 library(plotly)
+library(lubridate)
 library(dash)
 library(dashCoreComponents)
 library(dashHtmlComponents)
@@ -48,9 +49,9 @@ htmlDiv(list(
       htmlDiv(list(
         htmlP('This dashboard was created by a parent of a FCPS student, and is not directly affiliated with FCPS in anyway.'),
         htmlP('All data herein is publicly available at http://fcps.net/covid19'),
-        htmlP('The data presented in these visualizations should not be used to inform any health decisions for you or your family without consulting with a publich health official.'),
-        htmlP('Built using Dashr for R -- Source code available at: https://github.com/dwhend/fcpsDash'),
-        htmlP(paste("Data last updated ",lastUpdateDt,sep=""))
+        htmlP('The data presented in these visualizations should not be used to inform any health decisions for you or your family without consulting with your Doctor, or a public health official.'),
+        htmlP('Built using Dash for R. Source code available at: https://github.com/dwhend/fcpsDash'),
+        htmlP(paste("Data last updated ",lastUpdateDt," UTC (",format(with_tz(lastUpdateDt, tz = "America/New_York"),'%Y-%m-%d %I:%M %p')," ET)",sep=""))
       )
       ,style=list('display'='inline-block','verticalAlign'='top')
       ),
