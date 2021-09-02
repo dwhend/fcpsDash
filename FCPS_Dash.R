@@ -7,6 +7,7 @@ library(dash)
 library(dashCoreComponents)
 library(dashHtmlComponents)
 
+
 SCHOOLS<-read.csv("SchoolType.csv")
 lastUpdateDt <- Sys.time()
 
@@ -118,15 +119,15 @@ app$callback(
       lastUpdateDt <- file.info('FCPS_scrape.csv')$mtime
       lastUpdateStr <- paste("Data last updated ",lastUpdateDt," UTC (",format(with_tz(lastUpdateDt, tz = "America/New_York"),'%Y-%m-%d %I:%M %p')," ET)",sep="")
       
-      mostRecentDt <- max(as.Date(DASHDF$Date.Reported,"%m/%d/%Y"), na.rm=TRUE)
+      mostRecentDt <- max(as.Date(DASHDF$Date,"%m/%d/%Y"), na.rm=TRUE)
       
-      DASHC <- data.frame(DateReported=as.Date(DASHDF$Date.Reported,"%m/%d/%Y")
+      DASHC <- data.frame(DateReported=as.Date(DASHDF$Date,"%m/%d/%Y")
                           ,School=DASHDF$School
                           ,StudentCaseNum=as.numeric(DASHDF$Student.Cases)
                           ,StaffCaseNum=as.numeric(DASHDF$Staff.Cases)
                           ,StudentQuarantineNum=as.numeric(DASHDF$Student.Quarantines)
                           ,StaffQuarantineNum=as.numeric(DASHDF$Staff.Quarantines)
-                          ,Ndays=(mostRecentDt-as.Date(DASHDF$Date.Reported,"%m/%d/%Y"))
+                          ,Ndays=(mostRecentDt-as.Date(DASHDF$Date,"%m/%d/%Y"))
                           ,SchoolType=DASHDF$SchoolType)
       
       rm(DASHDF)
@@ -227,7 +228,7 @@ app$callback(
     
     figStackedBar <- plot_ly(data=DASHC_LAST_N_Timeseries,x=~DateReported,y=~DailyStudent,type='bar',name='Students') %>%
                      add_trace(y=~DailyStaff,name='Staff') %>%
-                     layout(title=paste("Number of new ",radioCaseQuar," by day",sep=""), xaxis=list(title="Date Reported"),yaxis=list(title='Count of Student/Staff'), barmode='stack')
+                     layout(title=paste("Number of new ",radioCaseQuar," by day",sep=""), xaxis=list(title="Date Reported",tickformat="%b %d %a"),yaxis=list(title='Count of Student/Staff'), barmode='stack')
     
     return(list(figGrandTotal,figTotal,figAvg,figStackedBar,lastUpdateStr))
   }
