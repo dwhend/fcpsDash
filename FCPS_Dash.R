@@ -6,12 +6,14 @@ library(lubridate)
 library(dash)
 library(dashCoreComponents)
 library(dashHtmlComponents)
-
+library(zoo)
 
 SCHOOLS<-read.csv("SchoolType.csv")
 lastUpdateDt <- Sys.time()
 
 app <- Dash$new()
+
+app$title("FCPS Covid-19 Dash")
 
 app$layout(
 htmlDiv(list(
@@ -49,7 +51,7 @@ htmlDiv(list(
       #disclaimer
       htmlDiv(list(
         htmlP('This dashboard was created by a parent of a FCPS student, and is not directly affiliated with FCPS in anyway.'),
-        htmlP('All data herein is publicly available at http://fcps.net/covid19'),
+        htmlP('All data herein is publicly available at http://fcps.net/covid19 and https://chfs.ky.gov/Pages/cvdaily.aspx'),
         htmlP('The data presented in these visualizations should not be used to inform any health decisions for you or your family without consulting with your Doctor, or a public health official.'),
         htmlP('Built using Dash for R. Source code available at: https://github.com/dwhend/fcpsDash'),
         htmlP(id='htmlp-lastupdatedt',children="Data last updated ")
@@ -116,10 +118,14 @@ app$callback(
     
     if(n_intervals==0 || (n_intervals*3600)%%3600==0){
       DASHDF <- read.csv(file='FCPS_scrape.csv')
+      CountyCovidCases <- read.csv(file="KYDailyCases.csv") %>% filter(County=="Fayette")
       lastUpdateDt <- file.info('FCPS_scrape.csv')$mtime
-      lastUpdateStr <- paste("Data last updated ",lastUpdateDt," UTC (",format(with_tz(lastUpdateDt, tz = "America/New_York"),'%Y-%m-%d %I:%M %p')," ET)",sep="")
+      mostRecentCountyDt <- max(as.Date(CountyCovidCases$Date,"%Y-%m-%d"))
+      
+    lastUpdateStr <- paste("Data last updated ",lastUpdateDt," UTC (",format(with_tz(lastUpdateDt, tz = "America/New_York"),'%Y-%m-%d %I:%M %p')," ET) -- Most recent County data available: ",mostRecentCountyDt,sep="")
       
       mostRecentDt <- max(as.Date(DASHDF$Date,"%m/%d/%Y"), na.rm=TRUE)
+      
       
       DASHC <- data.frame(DateReported=as.Date(DASHDF$Date,"%m/%d/%Y")
                           ,School=DASHDF$School
@@ -134,6 +140,11 @@ app$callback(
     }
     
     if(radioCaseQuar=="cases"){
+      
+      CountyCovidCasesLastN <- CountyCovidCases %>%
+        arrange(desc(Date)) %>%
+        mutate(Roll7D=zoo::rollmean(Cases,k=7,fill=NA,align="left")) %>%
+        filter((mostRecentDt-as.Date(Date,"%Y-%m-%d")) <= (LastNDay))
       
       textSearch <- str_to_lower(str_trim(textSearch))
       
@@ -227,9 +238,19 @@ app$callback(
              ,xaxis = list(title="",categoryorder="array",categoryarray=c("Elementary","Middle","High School","Other")))
     
     figStackedBar <- plot_ly(data=DASHC_LAST_N_Timeseries,x=~DateReported,y=~DailyStudent,type='bar',name='Students') %>%
-                     add_trace(y=~DailyStaff,name='Staff') %>%
-                     layout(title=paste("Number of new ",radioCaseQuar," by day",sep=""), xaxis=list(title="Date Reported",tickformat="%b %d %a"),yaxis=list(title='Count of Student/Staff'), barmode='stack')
+                      add_trace(y=~DailyStaff,name='Staff') %>%
+                      layout(title=paste("Number of new ",radioCaseQuar," by day",sep="")
+                              ,xaxis=list(title="Date Reported",tickformat="%b %d %a")
+                              ,yaxis=list(title='Count of Student/Staff')
+                              ,barmode='stack')
     
+    if(radioCaseQuar=="cases") {
+      
+    figStackedBar <- figStackedBar %>% 
+      add_trace(x=CountyCovidCasesLastN$Date, y=CountyCovidCasesLastN$Roll7D, type='scatter', mode="lines+markers"
+                 , name="Rolling 7-day average cases (Fayette County)")
+    }           
+
     return(list(figGrandTotal,figTotal,figAvg,figStackedBar,lastUpdateStr))
   }
 )
