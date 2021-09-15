@@ -3,6 +3,7 @@ library(tabulizer)
 library(stringr)
 library(httr)
 
+httr::set_config(config(ssl_verifypeer = 0L))
 casesCSV <- "KYDailyCases.csv"
 
 lastDate <- as.Date("2021-01-01","%Y-%m-%d")
@@ -48,7 +49,7 @@ lapply(tryURLYYYY,function(pYYYY){
   }
 })
 
-fileList <- list.files("./KYDailyCovidReports/", pattern="*.pdf", full.names=T, recursive=F)
+fileList <- list.files("./KYDailyCovidReports", pattern="*.pdf", full.names=T, recursive=F)
 
 lapply(fileList,function(f) {
   fileDate <- str_replace(str_replace(f,"./KYDailyCovidReports/COVID19DailyReport",""),".pdf","") %>% as.Date("%m%d%y")

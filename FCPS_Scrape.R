@@ -13,6 +13,6 @@ DASHDF <- merge(x=TABLES[["NULL"]],y=SCHOOLS,by="School",all.x=TRUE)
 mostRecentDt <- max(as.Date(DASHDF$"Date","%m/%d/%Y"), na.rm=TRUE) %>% as.Date()
 
 DASHDF %>% 
-  filter(mostRecentDt-as.Date(DASHDF$`Date`,"%m/%d/%Y") <= 28) %>%
+  filter(mostRecentDt-as.Date(DASHDF$`Date`,"%m/%d/%Y") <= (as.numeric(Sys.Date())-as.numeric(as.Date("2021-08-11")))) %>%
   write.csv(file="FCPS_scrape.csv",row.names=FALSE)
 

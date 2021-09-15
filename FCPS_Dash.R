@@ -69,7 +69,8 @@ htmlDiv(list(
             list(label = "Last 7 days" , value = 7),
             list(label = "Last 14 days", value = 14),
             list(label = "Last 21 days", value = 21),
-            list(label = "Last 28 days", value = 28)
+            list(label = "Last 28 days", value = 28),
+            list(label = "Since first day (Aug 11, 2021)", value = (as.numeric(Sys.Date())-as.numeric(as.Date("2021-08-11"))))
           ),
           value = 7
         )
