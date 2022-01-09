@@ -41,7 +41,7 @@ lapply(tryURLYYYY,function(pYYYY){
     res<-GET(pYYYY,SSL_VERIFY_PEER=F)
     if(res$status_code==200){
       bin<-content(res,"raw")
-      writeBin(bin,str_replace(str_replace(pYYYY,"https://chfs.ky.gov/cvdaily/","./KYDailyCovidReports/"),"2021.pdf","21.pdf"))
+      writeBin(bin,str_replace(str_replace(pYYYY,"https://chfs.ky.gov/cvdaily/","./KYDailyCovidReports/"),"2022.pdf","22.pdf"))
       }
     }
     ,error = function(e) print(paste(pYYYY, "not available"))
