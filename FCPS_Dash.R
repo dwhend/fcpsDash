@@ -4,6 +4,7 @@ library(stringr)
 library(plotly)
 library(lubridate)
 library(dash)
+library(dashHtmlComponents)
 library(zoo)
 
 SCHOOLS<-read.csv("SchoolType.csv")
