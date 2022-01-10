@@ -1,9 +1,11 @@
 library(rJava)
 library(tabulizer)
 library(stringr)
+library(dplyr)
+library(tidyr)
 library(httr)
 
-httr::set_config(config(ssl_verifypeer = 0L))
+httr::set_config(httr::config(ssl_verifypeer = 0L))
 casesCSV <- "KYDailyCases.csv"
 
 lastDate <- as.Date("2021-01-01","%Y-%m-%d")
@@ -41,7 +43,7 @@ lapply(tryURLYYYY,function(pYYYY){
     res<-GET(pYYYY,SSL_VERIFY_PEER=F)
     if(res$status_code==200){
       bin<-content(res,"raw")
-      writeBin(bin,str_replace(str_replace(pYYYY,"https://chfs.ky.gov/cvdaily/","./KYDailyCovidReports/"),"2022.pdf","22.pdf"))
+      writeBin(bin,str_replace(str_replace(str_replace(pYYYY,"https://chfs.ky.gov/cvdaily/","./KYDailyCovidReports/"),"2021.pdf","21.pdf"),"2022.pdf","22.pdf"))
       }
     }
     ,error = function(e) print(paste(pYYYY, "not available"))
@@ -59,22 +61,27 @@ lapply(fileList,function(f) {
 
     c0df <- data.frame(Date=fileDate,
                        County=newCaseTable[[1]]$County,
-                       Cases= as.numeric(newCaseTable[[1]]$Cases))
+                       Cases= newCaseTable[[1]]$Cases)
     c1df <- data.frame(Date=fileDate,
                        County=newCaseTable[[1]]$County.1,
-                       Cases= as.numeric(newCaseTable[[1]]$Cases.1))
+                       Cases= newCaseTable[[1]]$Cases.1)
     c2df <- data.frame(Date=fileDate,
                        County=newCaseTable[[1]]$County.2,
-                       Cases= as.numeric(newCaseTable[[1]]$Cases.2))
+                       Cases= newCaseTable[[1]]$Cases.2)
     c3df <- data.frame(Date=fileDate,
                        County=newCaseTable[[1]]$County.3,
-                       Cases= as.numeric(newCaseTable[[1]]$Cases.3))
+                       Cases= newCaseTable[[1]]$Cases.3)
+    
     cases <- rbind(rbind(c0df,c1df),rbind(c2df,c3df))
     
+    fayette <- cases %>%
+                mutate(Cases=str_replace(Cases,",","")) %>%
+                filter(County=="Fayette")
+  
     if(file.exists(casesCSV)){
-        write.table(cases,file="KYDailyCases.csv",sep=",",append=T,row.names=F,col.names=F)
+        write.table(fayette,file="KYDailyCases.csv",sep=",",append=T,row.names=F,col.names=F)
       } else {
-        write.table(cases,file="KYDailyCases.csv",sep=",",append=T,row.names=F,col.names=T)
+        write.table(fayette,file="KYDailyCases.csv",sep=",",append=T,row.names=F,col.names=T)
       }
   }
 }) 
